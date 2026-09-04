@@ -1,8 +1,23 @@
-import type { HTMLAttributes } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  ElementType,
+  HTMLAttributes,
+} from "react";
 import { cn } from "../../lib/utils";
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+
+type CardProps<T extends ElementType = "div"> = {
+  as?: T;
+  className?: string;
+} & Omit<ComponentPropsWithoutRef<T>, "as" | "className">;
+
+export function Card<T extends ElementType = "div">({
+  as,
+  className,
+  ...props
+}: CardProps<T>) {
+  const Component = as ?? "div";
   return (
-    <div
+    <Component
       className={cn(
         "rounded-xl border border-border bg-card text-card-foreground shadow-sm",
         className,

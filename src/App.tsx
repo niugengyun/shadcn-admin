@@ -18,7 +18,6 @@ import {
   ChevronDown,
   Settings,
   LogOut,
-  Server,
   Sun,
   UserCircle,
 } from "lucide-react";
@@ -44,6 +43,8 @@ import { LanguageProvider, useI18n } from "./i18n";
 import { Button } from "./components/ui/button";
 import { Card } from "./components/ui/card";
 import { Input } from "./components/ui/input";
+import { MetricCard } from "./components/metric-card";
+import { PageHeader } from "./components/page-header";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,8 +66,9 @@ const navIdToPath = (id: NavId): string =>
   navItems.find((item) => item.id === id)?.path ?? "/";
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const { t } = useI18n();
   const dark = resolvedTheme === "dark";
-  const label = "切换主题 / Toggle Theme";
+  const label = dark ? t("common.switchToLight") : t("common.switchToDark");
   return (
     <Button
       variant="outline"
@@ -82,9 +84,9 @@ function ThemeToggle() {
   );
 }
 function LanguageToggle() {
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
   const nextLanguage = language === "zh-CN" ? "en" : "zh-CN";
-  const label = "切换语言 / Switch Language";
+  const label = language === "zh-CN" ? t("common.switchToEnglish") : t("common.switchToChinese");
   return (
     <Button
       variant="outline"
@@ -109,6 +111,7 @@ function TopNav({
   onOpenMenu: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
   return (
     <header className="top-nav">
       <div className="top-nav-brand">
@@ -122,8 +125,8 @@ function TopNav({
           className="top-nav-menu"
           onClick={onOpenMenu}
           type="button"
-          aria-label="Open menu"
-          title="Open menu"
+          aria-label={t("common.openMenu")}
+          title={t("common.openMenu")}
         >
           <Menu size={18} />
         </Button>
@@ -133,8 +136,8 @@ function TopNav({
           className="top-nav-collapse"
           onClick={onToggleCollapsed}
           type="button"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("common.expandSidebar") : t("common.collapseSidebar")}
+          title={collapsed ? t("common.expandSidebar") : t("common.collapseSidebar")}
         >
           {collapsed ? (
             <PanelLeftOpen size={16} />
@@ -144,7 +147,7 @@ function TopNav({
         </Button>
         <div className="top-nav-search">
           <Search size={15} aria-hidden="true" />
-          <Input aria-label="Search" placeholder="Search" />
+          <Input aria-label={t("common.search")} placeholder={t("common.search")} />
         </div>
         <div className="top-nav-actions">
           <LanguageToggle />
@@ -155,11 +158,12 @@ function TopNav({
                 variant="ghost"
                 className="top-nav-user hover:bg-transparent"
                 type="button"
+                aria-label={t("common.openUserMenu")}
               >
                 <UserCircle size={28} />
                 <span>
-                  <b>Operator</b>
-                  <small>Control plane</small>
+                  <b>{t("common.operator")}</b>
+                  <small>{t("common.controlPlane")}</small>
                 </span>
                 <ChevronDown size={14} />
               </Button>
@@ -167,15 +171,15 @@ function TopNav({
             <DropdownMenuContent>
               <DropdownMenuItem onSelect={() => setOpen(false)}>
                 <UserCircle size={15} />
-                Profile
+                {t("common.profile")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setOpen(false)}>
                 <Settings size={15} />
-                Settings
+                {t("common.settings")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setOpen(false)}>
                 <LogOut size={15} />
-                Sign out
+                {t("common.signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -230,49 +234,6 @@ function Sidebar({
     </aside>
   );
 }
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  link,
-  tone,
-  onClick,
-}: {
-  icon: typeof Server;
-  label: string;
-  value: string;
-  link: string;
-  tone: string;
-  onClick: () => void;
-}) {
-  return (
-    <Card
-      className="metric-card cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      role="link"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onClick();
-        }
-      }}
-    >
-      <div className="metric-top">
-        <span className={`metric-icon ${tone}`}>
-          <Icon size={16} />
-        </span>
-        <span>{label}</span>
-        <ArrowUpRight size={15} className="metric-arrow" />
-      </div>
-      <strong>{value}</strong>
-      <div className="metric-link">
-        {link}
-        <ArrowUpRight size={14} />
-      </div>
-    </Card>
-  );
-}
 function Overview({ onNavigate }: { onNavigate: (id: NavId) => void }) {
   const { t } = useI18n();
   const tokenTrend = [
@@ -313,31 +274,29 @@ function Overview({ onNavigate }: { onNavigate: (id: NavId) => void }) {
     { name: "Pi", model: "deepseek-v3", models: 1, status: "offline", color: "bg-muted-foreground" },
   ];
   const relays = [
-    { name: "主通道", detail: "api.b.ai/v1", latency: "180ms", status: "healthy" },
-    { name: "备用通道", detail: "ai.akile.ai/v1", latency: "246ms", status: "healthy" },
-    { name: "保底通道", detail: "api.openai.com/v1", latency: "382ms", status: "degraded" },
+    { nameKey: "overview.primaryRelay", detail: "api.b.ai/v1", latency: "180ms", status: "healthy" },
+    { nameKey: "overview.fallbackRelay", detail: "ai.akile.ai/v1", latency: "246ms", status: "healthy" },
+    { nameKey: "overview.emergencyRelay", detail: "api.openai.com/v1", latency: "382ms", status: "degraded" },
   ];
   const activity = [
-    { time: "刚刚", label: "Codex", detail: t("overview.readModel"), tone: "bg-success" },
-    { time: "2 分钟前", label: "LLM 网关", detail: t("overview.relayLatency"), tone: "bg-success" },
-    { time: "8 分钟前", label: "Token 审计", detail: t("overview.tokenRequest"), tone: "bg-chart-1" },
-    { time: "12 分钟前", label: "Claude Code", detail: t("overview.agentRunning"), tone: "bg-chart-3" },
+    { timeKey: "common.justNow", labelKey: "overview.codex", detail: t("overview.readModel"), tone: "bg-success" },
+    { timeKey: "common.minutesAgo2", labelKey: "overview.llmGateway", detail: t("overview.relayLatency"), tone: "bg-success" },
+    { timeKey: "common.minutesAgo8", labelKey: "overview.tokenAudit", detail: t("overview.tokenRequest"), tone: "bg-chart-1" },
+    { timeKey: "common.minutesAgo12", labelKey: "overview.claudeCode", detail: t("overview.agentRunning"), tone: "bg-chart-3" },
   ];
   return (
     <div className="overview space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-border pb-6 sm:flex-row sm:items-end">
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">{t("common.controlPlane")}</p>
-          <h1 className="text-3xl font-semibold tracking-tight">{t("nav.overview")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t("overview.subtitle")}</p>
-        </div>
-        <span className="inline-flex items-center gap-2 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-success" />{t("overview.synced")}</span>
-      </div>
+      <PageHeader
+        eyebrow={t("common.controlPlane")}
+        title={t("nav.overview")}
+        subtitle={t("overview.subtitle")}
+        action={<span className="inline-flex shrink-0 items-center gap-2 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-success" />{t("overview.synced")}</span>}
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={Bot} label={t("overview.discoveredAgents")} value="4" link={t("overview.agentAvailability")} tone="" onClick={() => onNavigate("agents")} />
-        <MetricCard icon={GitFork} label={t("overview.healthyRoutes")} value="2 / 3" link={t("overview.routeAvailability")} tone="" onClick={() => onNavigate("routes")} />
-        <MetricCard icon={BarChart3} label={t("overview.todayTokens")} value="2.45M" link={t("overview.vsYesterday")} tone="" onClick={() => onNavigate("metrics")} />
-        <MetricCard icon={Cpu} label={t("overview.requestsToday")} value="1,269" link={t("overview.estimatedCostValue")} tone="" onClick={() => onNavigate("metrics")} />
+        <MetricCard icon={Bot} label={t("overview.discoveredAgents")} value="4" link={t("overview.agentAvailability")} onClick={() => onNavigate("agents")} />
+        <MetricCard icon={GitFork} label={t("overview.healthyRoutes")} value="2 / 3" link={t("overview.routeAvailability")} onClick={() => onNavigate("routes")} />
+        <MetricCard icon={BarChart3} label={t("overview.todayTokens")} value="2.45M" link={t("overview.vsYesterday")} onClick={() => onNavigate("metrics")} />
+        <MetricCard icon={Cpu} label={t("overview.requestsToday")} value="1,269" link={t("overview.estimatedCostValue")} onClick={() => onNavigate("metrics")} />
       </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <Card className="min-w-0 p-5 xl:col-span-8">
@@ -402,12 +361,12 @@ function Overview({ onNavigate }: { onNavigate: (id: NavId) => void }) {
         </Card>
         <Card className="min-w-0 p-5 xl:col-span-5">
           <div className="flex items-start justify-between gap-4"><div className="flex items-start gap-3"><span className="overview-chart-icon"><HeartPulse size={17} /></span><div><h2 className="font-semibold">{t("overview.routesHealth")}</h2><p className="mt-1 text-xs text-muted-foreground">{t("overview.routesHealthHint")}</p></div></div><Button variant="link" size="sm" onClick={() => onNavigate("routes")} type="button">{t("overview.viewRoutes")} <ArrowUpRight size={14} /></Button></div>
-          <div className="mt-4 divide-y divide-border">{relays.map((relay) => <div key={relay.name} className="flex items-center gap-3 py-3"><span className={`h-2 w-2 rounded-full ${relay.status === "healthy" ? "bg-success" : "bg-warning"}`} /><div className="min-w-0 flex-1"><strong className="block text-sm">{relay.name}</strong><span className="block truncate font-mono text-xs text-muted-foreground">{relay.detail}</span></div><span className="font-mono text-xs">{relay.latency}</span></div>)}</div>
+          <div className="mt-4 divide-y divide-border">{relays.map((relay) => <div key={relay.nameKey} className="flex items-center gap-3 py-3"><span className={`h-2 w-2 rounded-full ${relay.status === "healthy" ? "bg-success" : "bg-warning"}`} /><div className="min-w-0 flex-1"><strong className="block text-sm">{t(relay.nameKey)}</strong><span className="block truncate font-mono text-xs text-muted-foreground">{relay.detail}</span></div><span className="font-mono text-xs">{relay.latency}</span></div>)}</div>
         </Card>
       </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card className="min-w-0 p-5"><div className="flex items-start gap-3"><span className="overview-chart-icon"><Bot size={17} /></span><div><h2 className="font-semibold">{t("overview.agentRegistry")}</h2><p className="mt-1 text-xs text-muted-foreground">{t("overview.agentRegistryHint")}</p></div></div><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">{agents.map((agent) => <button key={agent.name} type="button" onClick={() => onNavigate("agents")} className="rounded-lg border border-border bg-background p-4 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><div className="flex items-center justify-between"><span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted"><Bot size={17} /></span><span className={`h-2 w-2 rounded-full ${agent.color}`} /></div><strong className="mt-4 block text-sm">{agent.name}</strong><span className="mt-1 block truncate font-mono text-xs text-muted-foreground">{agent.model}</span><span className="mt-3 block text-xs text-muted-foreground">{agent.models} {t("overview.modelsConfigured")}</span></button>)}</div></Card>
-        <Card className="min-w-0 p-5"><div className="flex items-start gap-3"><span className="overview-chart-icon"><Activity size={17} /></span><div><h2 className="font-semibold">{t("overview.recentActivity")}</h2><p className="mt-1 text-xs text-muted-foreground">{t("overview.recentActivityHint")}</p></div></div><div className="mt-4 divide-y divide-border">{activity.map((item) => <div key={`${item.time}-${item.label}`} className="flex items-center gap-3 py-3"><span className={`h-2 w-2 rounded-full ${item.tone}`} /><div className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.detail}</strong><span className="text-xs text-muted-foreground">{item.label}</span></div><span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.time}</span></div>)}</div></Card>
+        <Card className="min-w-0 p-5"><div className="flex items-start gap-3"><span className="overview-chart-icon"><Activity size={17} /></span><div><h2 className="font-semibold">{t("overview.recentActivity")}</h2><p className="mt-1 text-xs text-muted-foreground">{t("overview.recentActivityHint")}</p></div></div><div className="mt-4 divide-y divide-border">{activity.map((item) => <div key={`${item.timeKey}-${item.labelKey}`} className="flex items-center gap-3 py-3"><span className={`h-2 w-2 rounded-full ${item.tone}`} /><div className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.detail}</strong><span className="text-xs text-muted-foreground">{t(item.labelKey)}</span></div><span className="shrink-0 font-mono text-[11px] text-muted-foreground">{t(item.timeKey)}</span></div>)}</div></Card>
       </div>
     </div>
   );

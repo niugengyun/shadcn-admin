@@ -12,13 +12,21 @@ import { useI18n } from "../i18n";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
-import { Dialog, DialogContent } from "../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Switch } from "../components/ui/switch";
+import { PageHeader } from "../components/page-header";
 
 type Provider = {
   name: string;
+  nameKey?: string;
   role: string;
+  roleKey?: string;
   url: string;
   models: string;
   priority: number;
@@ -28,8 +36,10 @@ type Provider = {
 
 const initialProviders: Provider[] = [
   {
-    name: "中转站-主通道",
+    name: "primary-relay",
+    nameKey: "routes.primaryRelay",
     role: "Primary",
+    roleKey: "routes.rolePrimary",
     url: "https://api.b.ai/v1",
     models: "GPT-5.6 · Claude 4",
     priority: 1,
@@ -37,8 +47,10 @@ const initialProviders: Provider[] = [
     enabled: true,
   },
   {
-    name: "备用中转站",
+    name: "fallback-relay",
+    nameKey: "routes.fallbackRelay",
     role: "Fallback",
+    roleKey: "routes.roleFallback",
     url: "https://ai.akile.ai/v1",
     models: "GPT-4o · DeepSeek-V3",
     priority: 2,
@@ -46,8 +58,10 @@ const initialProviders: Provider[] = [
     enabled: true,
   },
   {
-    name: "官方直连",
+    name: "direct-provider",
+    nameKey: "routes.directProvider",
     role: "Emergency",
+    roleKey: "routes.roleEmergency",
     url: "https://api.openai.com/v1",
     models: "GPT-4o · o3-mini",
     priority: 3,
@@ -106,30 +120,19 @@ export default function Routes() {
   };
 
   const activeProviders = providers.filter((item) => item.enabled).length;
+  const providerName = (item: Provider): string =>
+    item.nameKey ? t(item.nameKey) : item.name;
+  const providerRole = (item: Provider): string =>
+    item.roleKey ? t(item.roleKey) : item.role;
 
   return (
-    <main className="routes-page w-full min-w-0 space-y-6 text-foreground">
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 lg:flex-row lg:items-end">
-        <div className="min-w-0">
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {t("common.controlPlane")}
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            {t("routes.title")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("routes.subtitle")}
-          </p>
-        </div>
-        <Button
-          className="w-full shrink-0 gap-2 sm:w-auto"
-          onClick={() => setDialog(true)}
-          type="button"
-        >
-          <Plus size={16} aria-hidden="true" />
-          {t("routes.add")}
-        </Button>
-      </header>
+    <div className="routes-page w-full min-w-0 space-y-6 text-foreground">
+      <PageHeader
+        eyebrow={t("common.controlPlane")}
+        title={t("routes.title")}
+        subtitle={t("routes.subtitle")}
+        action={<Button className="w-full shrink-0 gap-2 sm:w-auto" onClick={() => setDialog(true)} type="button"><Plus size={16} aria-hidden="true" />{t("routes.add")}</Button>}
+      />
 
       <section
         aria-label={t("routes.title")}
@@ -196,15 +199,15 @@ export default function Routes() {
                   </span>
                   <div className="min-w-0">
                     <strong className="block truncate text-sm font-semibold">
-                      {item.name}
+                      {providerName(item)}
                     </strong>
                     <span className="mt-1 block text-xs text-muted-foreground">
-                      {item.role}
+                      {providerRole(item)}
                     </span>
                   </div>
                 </div>
                 <Switch
-                  aria-label={`${t("routes.toggle")}: ${item.name}`}
+                  aria-label={`${t("routes.toggle")}: ${providerName(item)}`}
                   checked={item.enabled}
                   onCheckedChange={(checked) =>
                     setProviderEnabled(index, checked)
@@ -276,7 +279,7 @@ export default function Routes() {
                 <span className="mr-2 font-mono text-muted-foreground">
                   P{item.priority}
                 </span>
-                <span className="truncate">{item.name}</span>
+                    <span className="truncate">{providerName(item)}</span>
               </span>
               {index < providers.length - 1 && (
                 <GitFork
@@ -291,9 +294,9 @@ export default function Routes() {
       </Card>
 
       <Dialog open={dialog} onOpenChange={setDialog}>
-        <DialogContent aria-label={t("routes.add")} className="max-w-md">
+        <DialogContent className="max-w-md">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold">{t("routes.add")}</h2>
+            <DialogTitle className="text-lg font-semibold">{t("routes.add")}</DialogTitle>
             <Button
               aria-label={copy.close}
               className="shrink-0"
@@ -306,6 +309,9 @@ export default function Routes() {
               <X size={16} aria-hidden="true" />
             </Button>
           </div>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {t("routes.dialogDescription")}
+          </DialogDescription>
 
           <label className="block text-sm">
             {copy.providerName}
@@ -342,6 +348,6 @@ export default function Routes() {
           </div>
         </DialogContent>
       </Dialog>
-    </main>
+    </div>
   );
 }

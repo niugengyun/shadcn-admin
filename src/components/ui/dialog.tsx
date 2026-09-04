@@ -3,6 +3,28 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "../../lib/utils";
 
 export const Dialog = DialogPrimitive.Root;
+export function DialogTitle({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
+  );
+}
+export function DialogDescription({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  );
+}
 export function DialogContent({
   className,
   ...props

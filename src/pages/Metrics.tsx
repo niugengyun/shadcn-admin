@@ -1,8 +1,6 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
-  ArrowDownRight,
-  ArrowUpRight,
   Coins,
   Gauge,
   RefreshCw,
@@ -26,6 +24,8 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+import { MetricCard } from "../components/metric-card";
+import { PageHeader } from "../components/page-header";
 import {
   Table,
   TableBody,
@@ -38,13 +38,13 @@ import {
 type TraceStatus = "success" | "failed" | "queued";
 type Trace = {
   id: string;
-  agent: string;
-  node: string;
+  agentKey: string;
+  nodeKey: string;
   model: string;
   tokens: string;
   latency: string;
   status: TraceStatus;
-  time: string;
+  timeKey: string;
 };
 const trend = [
   { time: "00:00", prompt: 320, completion: 180 },
@@ -96,93 +96,55 @@ const colors = [
 const traces: Trace[] = [
   {
     id: "tr_8f2a91c",
-    agent: "Code Reviewer",
-    node: "中转站-主通道",
+    agentKey: "metrics.codeReviewer",
+    nodeKey: "metrics.primaryRelay",
     model: "Claude 3.5",
     tokens: "56.6k",
     latency: "620ms",
     status: "success",
-    time: "刚刚",
+    timeKey: "common.justNow",
   },
   {
     id: "tr_31c07bd",
-    agent: "Developer",
-    node: "备用中转站",
+    agentKey: "metrics.developer",
+    nodeKey: "metrics.fallbackRelay",
     model: "GPT-4o",
     tokens: "38.9k",
     latency: "488ms",
     status: "success",
-    time: "2 分钟前",
+    timeKey: "common.minutesAgo2",
   },
   {
     id: "tr_4a0e112",
-    agent: "Code Reviewer",
-    node: "中转站-主通道",
+    agentKey: "metrics.codeReviewer",
+    nodeKey: "metrics.primaryRelay",
     model: "DeepSeek-V3",
     tokens: "33.5k",
     latency: "1.24s",
     status: "queued",
-    time: "8 分钟前",
+    timeKey: "common.minutesAgo8",
   },
   {
     id: "tr_9dd81ea",
-    agent: "Developer",
-    node: "官方直连",
+    agentKey: "metrics.developer",
+    nodeKey: "metrics.directProvider",
     model: "Claude 3.5",
     tokens: "74.0k",
     latency: "2.05s",
     status: "failed",
-    time: "12 分钟前",
+    timeKey: "common.minutesAgo12",
   },
   {
     id: "tr_6bc30fa",
-    agent: "Researcher",
-    node: "中转站-主通道",
+    agentKey: "metrics.researcher",
+    nodeKey: "metrics.primaryRelay",
     model: "GPT-4o",
     tokens: "21.8k",
     latency: "712ms",
     status: "success",
-    time: "18 分钟前",
+    timeKey: "common.minutesAgo18",
   },
 ];
-function MetricCard({
-  icon,
-  label,
-  value,
-  detail,
-  change,
-  down = false,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-  change: string;
-  down?: boolean;
-}) {
-  return (
-    <Card className="relative p-5">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        <span className="grid h-7 w-7 place-items-center rounded-md border border-border bg-muted text-foreground">
-          {icon}
-        </span>
-        {label}
-      </div>
-      <div className="mt-4 font-mono text-3xl font-bold tracking-tight sm:text-[2rem]">
-        {value}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-        <span
-          className={`inline-flex items-center gap-0.5 font-medium ${down ? "text-destructive" : "text-success"}`}
-        >
-          {down ? <ArrowDownRight size={13} /> : <ArrowUpRight size={13} />}
-          {change}
-        </span>
-        {detail}
-      </div>
-    </Card>
-  );
-}
 export default function Metrics() {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
@@ -192,11 +154,11 @@ export default function Metrics() {
   const filtered = useMemo(
     () =>
       traces.filter((trace) =>
-        `${trace.id} ${trace.agent} ${trace.model} ${trace.node}`
+        `${trace.id} ${t(trace.agentKey)} ${trace.model} ${t(trace.nodeKey)}`
           .toLowerCase()
           .includes(query.toLowerCase()),
       ),
-    [query],
+    [query, t],
   );
   const refresh = (): void => {
     setRefreshing(true);
@@ -209,17 +171,12 @@ export default function Metrics() {
         ? t("metrics.failed")
         : t("metrics.queued");
   return (
-    <main className="min-h-screen w-full space-y-6 bg-background py-6 text-foreground">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("metrics.title")}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {t("metrics.subtitle")}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="metrics-page w-full space-y-6 text-foreground">
+      <PageHeader
+        eyebrow={t("common.controlPlane")}
+        title={t("metrics.title")}
+        subtitle={t("metrics.subtitle")}
+        action={<div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <div className="flex items-center rounded-md border border-border bg-muted p-1">
             {(
               [
@@ -251,25 +208,25 @@ export default function Metrics() {
           >
             <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
           </Button>
-        </div>
-      </header>
+        </div>}
+      />
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          icon={<TrendingUp size={15} />}
+          icon={TrendingUp}
           label={t("metrics.totalTokens")}
           value="1.08B"
           detail={t("metrics.vsPrevious")}
           change="12.4%"
         />
         <MetricCard
-          icon={<Activity size={15} />}
+          icon={Activity}
           label={t("metrics.sessions")}
           value="1,269"
           detail={t("metrics.activePeriod")}
           change="24h"
         />
         <MetricCard
-          icon={<Coins size={15} />}
+          icon={Coins}
           label={t("metrics.estimatedCost")}
           value="$4.2k"
           detail={t("metrics.modelPricing")}
@@ -277,7 +234,7 @@ export default function Metrics() {
           down
         />
         <MetricCard
-          icon={<Gauge size={15} />}
+          icon={Gauge}
           label={t("metrics.p95Health")}
           value="480ms"
           detail={t("metrics.successRate")}
@@ -434,16 +391,17 @@ export default function Metrics() {
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              aria-label={t("metrics.filter")}
               placeholder={t("metrics.filter")}
               className="pl-8"
             />
           </div>
         </div>
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[920px] whitespace-nowrap">
             <TableHeader>
               <TableRow>
-                <TableHead>Trace ID</TableHead>
+                <TableHead>{t("metrics.traceId")}</TableHead>
                 <TableHead>{t("metrics.agent")}</TableHead>
                 <TableHead>{t("metrics.node")}</TableHead>
                 <TableHead>{t("metrics.model")}</TableHead>
@@ -459,8 +417,8 @@ export default function Metrics() {
                   <TableCell className="font-mono text-xs">
                     {trace.id}
                   </TableCell>
-                  <TableCell>{trace.agent}</TableCell>
-                  <TableCell>{trace.node}</TableCell>
+                  <TableCell>{t(trace.agentKey)}</TableCell>
+                  <TableCell>{t(trace.nodeKey)}</TableCell>
                   <TableCell>{trace.model}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {trace.tokens}
@@ -477,14 +435,28 @@ export default function Metrics() {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {trace.time}
+                    {t(trace.timeKey)}
                   </TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-28 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2" role="status" aria-live="polite">
+                      <span className="text-sm text-muted-foreground">{t("metrics.noResults")}</span>
+                      {query && (
+                        <Button type="button" variant="link" size="sm" onClick={() => setQuery("")}>
+                          {t("metrics.clearFilter")}
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
       </Card>
-    </main>
+    </div>
   );
 }
