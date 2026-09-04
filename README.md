@@ -87,6 +87,7 @@ npx tsc -b
 ```text
 .
 ├── public/                     # 不经过构建处理的静态资源
+├── DESIGN_SYSTEM.md            # UI 约束、主题和布局规范
 ├── src/
 │   ├── pages/                  # 业务页面，按一级导航拆分
 │   │   ├── Agents.tsx          # Agent Gateway / Harness 管理
@@ -102,6 +103,7 @@ npx tsc -b
 │   ├── index.css               # 全局样式入口
 │   └── main.tsx                # React 应用入口
 ├── .env.example                # 环境变量模板
+├── tests/                      # 端到端与组件测试预留目录
 ├── index.html                  # HTML 入口
 ├── package.json                # 脚本与依赖
 ├── tsconfig*.json              # TypeScript 配置
@@ -191,6 +193,29 @@ src/
 ```
 
 页面组件只负责展示和交互，接口请求、响应类型和错误处理放在 `services/`。当接口数量增加后，可再引入 TanStack Query 处理缓存、轮询和失效策略。
+
+## 响应式侧栏
+
+侧栏采用参考项目中的三态思路：桌面展开、桌面图标折叠、移动端抽屉。折叠状态保存在 `localStorage` 的 `agent-sidebar-collapsed`，移动端通过遮罩层关闭。语言和主题分别由独立 Provider / state 管理，不共享切换值，因此互不联动。
+
+## 测试建议
+
+参考 `satnaing/shadcn-admin` 的测试组织方式，正式接入业务接口后建议补充：
+
+```text
+tests/
+├── setup.ts                 # 测试环境和 localStorage 清理
+├── sidebar.test.tsx         # 折叠、展开、移动端抽屉、激活态
+├── i18n.test.tsx            # 中英文切换和偏好持久化
+├── overview.test.tsx        # 三类业务指标与快捷入口
+├── agents.test.tsx          # 实例状态、停止、重启、日志 Sheet
+├── routes.test.tsx          # 节点开关、添加节点 Dialog、Failover
+├── metrics.test.tsx         # 时间范围、图表容器、审计表
+└── e2e/
+    └── control-plane.spec.ts # Chromium 端到端关键流程
+```
+
+推荐工具组合：Vitest + Testing Library 做组件和状态测试，Playwright 做浏览器级响应式回归。每次提交至少执行 `npm run build`、`npm run lint` 和测试命令；当前仓库尚未安装测试依赖，以上目录为接入后约定。
 
 ## 新增页面规范
 
