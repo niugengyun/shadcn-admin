@@ -18,6 +18,18 @@
 
 README 只介绍项目和运行方式；具体约束以以上三份文档为准，避免重复维护产生冲突。
 
+## 作为后台模板复用
+
+本项目的 Nav、Sidebar、Content、主题、响应式布局和 `src/components/ui/` 是通用框架层；`src/pages/Agents.tsx`、`Routes.tsx`、`Metrics.tsx` 是当前项目的示例业务页面，不是所有衍生项目都必须保留的页面。
+
+基于本模板创建其他项目时：
+
+1. 先读取 [AGENTS.md](./AGENTS.md)、[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)、[DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md)。
+2. 保留 UI 组件、主题 token、应用壳层、Providers、工具函数和构建配置。
+3. 只保留目标项目需要的业务页面；删除示例页面时同步清理导航、路由、i18n、接口和无引用文件。
+4. 新页面遵循统一 Content 边界和响应式规则，不复制旧页面 CSS。
+5. 迁移后运行 `npm run build`、`npm run lint`，并检查桌面/手机视口及主题、语言、侧栏交互。
+
 ## 特性
 
 - Vite + React 19 + TypeScript

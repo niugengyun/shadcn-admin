@@ -12,9 +12,9 @@ import { useI18n } from "../i18n";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
+import { Dialog, DialogContent } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Switch } from "../components/ui/switch";
-import { Dialog, DialogContent } from "../components/ui/dialog";
 
 type Provider = {
   name: string;
@@ -25,6 +25,7 @@ type Provider = {
   latency: string;
   enabled: boolean;
 };
+
 const initialProviders: Provider[] = [
   {
     name: "中转站-主通道",
@@ -54,27 +55,46 @@ const initialProviders: Provider[] = [
     enabled: false,
   },
 ];
+
 export default function Routes() {
   const { t } = useI18n();
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
   const [dialog, setDialog] = useState(false);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const toggle = (index: number): void =>
+  const copy = {
+    active: t("routes.active"),
+    success: t("routes.success"),
+    healthy: t("routes.healthy"),
+    disabled: t("routes.disabled"),
+    failoverHint: t("routes.failoverHint"),
+    providerName: t("routes.providerName"),
+    endpoint: t("routes.endpoint"),
+    cancel: t("routes.cancel"),
+    close: t("routes.close"),
+    namePlaceholder: t("routes.namePlaceholder"),
+    urlPlaceholder: t("routes.urlPlaceholder"),
+    pendingModels: t("routes.pendingModels"),
+    customRole: t("routes.customRole"),
+  };
+
+  const setProviderEnabled = (index: number, enabled: boolean): void => {
     setProviders((items) =>
       items.map((item, current) =>
-        current === index ? { ...item, enabled: !item.enabled } : item,
+        current === index ? { ...item, enabled } : item,
       ),
     );
+  };
+
   const addProvider = (): void => {
     if (!name.trim() || !url.trim()) return;
     setProviders((items) => [
       ...items,
       {
-        name,
-        role: "Custom",
-        url,
-        models: "待配置",
+        name: name.trim(),
+        role: copy.customRole,
+        url: url.trim(),
+        models: copy.pendingModels,
         priority: items.length + 1,
         latency: "—",
         enabled: true,
@@ -84,189 +104,244 @@ export default function Routes() {
     setUrl("");
     setDialog(false);
   };
+
+  const activeProviders = providers.filter((item) => item.enabled).length;
+
   return (
-    <main className="w-full min-h-screen space-y-6 bg-background py-6 text-foreground">
-      <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+    <main className="routes-page w-full min-w-0 space-y-6 text-foreground">
+      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 lg:flex-row lg:items-end">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {t("common.controlPlane")}
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             {t("routes.title")}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             {t("routes.subtitle")}
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setDialog(true)} type="button">
-          <Plus size={16} />
+        <Button
+          className="w-full shrink-0 gap-2 sm:w-auto"
+          onClick={() => setDialog(true)}
+          type="button"
+        >
+          <Plus size={16} aria-hidden="true" />
           {t("routes.add")}
         </Button>
       </header>
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-5">
-          <p className="text-xs text-muted-foreground">LiteLLM STATUS</p>
-          <div className="mt-3 flex items-center gap-2 text-lg font-semibold">
-            <span className="h-2.5 w-2.5 rounded-full bg-success" />
+
+      <section
+        aria-label={t("routes.title")}
+        className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-3"
+      >
+        <Card className="min-w-0 p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            LiteLLM STATUS
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-lg font-semibold">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-success" />
             {t("common.operational")}
           </div>
-          <p className="mt-2 font-mono text-xs text-muted-foreground">
+          <p className="mt-3 font-mono text-xs text-muted-foreground">
             v1.61.0 · port 4000
           </p>
         </Card>
-        <Card className="p-5">
-          <p className="text-xs text-muted-foreground">
+
+        <Card className="min-w-0 p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
             {t("routes.providers")}
           </p>
-          <strong className="mt-2 block font-mono text-3xl">
-            {providers.filter((item) => item.enabled).length}
+          <strong className="mt-3 block font-mono text-3xl font-medium tracking-tight">
+            {activeProviders}
           </strong>
           <p className="mt-2 text-xs text-muted-foreground">
-            {t("routes.active")}
+            {copy.active}
           </p>
         </Card>
-        <Card className="p-5">
-          <p className="text-xs text-muted-foreground">
+
+        <Card className="min-w-0 p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
             {t("routes.failover")}
           </p>
-          <strong className="mt-2 block font-mono text-3xl">99.9%</strong>
+          <strong className="mt-3 block font-mono text-3xl font-medium tracking-tight">
+            99.9%
+          </strong>
           <p className="mt-2 text-xs text-muted-foreground">
-            {t("routes.success")}
+            {copy.success}
           </p>
         </Card>
       </section>
-      <section>
-        <div className="mb-3 flex items-center justify-between">
+
+      <section className="min-w-0">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">{t("routes.providers")}</h2>
-          <span className="text-xs text-muted-foreground">UPSTREAM POOL</span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            {t("routes.upstreamPool")}
+          </span>
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+
+        <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-3">
           {providers.map((item, index) => (
             <Card
               key={`${item.name}-${index}`}
-              className={`p-5 ${!item.enabled ? "opacity-60" : ""}`}
+              className={`flex min-w-0 flex-col p-5 transition-opacity ${
+                item.enabled ? "" : "opacity-60"
+              }`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted">
-                    <Globe2 size={17} />
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-muted text-foreground">
+                    <Globe2 size={17} aria-hidden="true" />
                   </span>
-                  <div>
-                    <strong className="block text-sm">{item.name}</strong>
-                    <span className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-sm font-semibold">
+                      {item.name}
+                    </strong>
+                    <span className="mt-1 block text-xs text-muted-foreground">
                       {item.role}
                     </span>
                   </div>
                 </div>
                 <Switch
-                  aria-label={t("routes.toggle")}
+                  aria-label={`${t("routes.toggle")}: ${item.name}`}
                   checked={item.enabled}
-                  onClick={() => toggle(index)}
+                  onCheckedChange={(checked) =>
+                    setProviderEnabled(index, checked)
+                  }
                 />
               </div>
-              <code className="mt-4 block truncate rounded border border-border bg-muted/40 p-2 text-xs">
+
+              <code className="mt-5 block min-w-0 truncate rounded-md border border-border bg-muted/40 px-2.5 py-2 font-mono text-xs text-foreground">
                 {item.url}
               </code>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                <div>
+
+              <div className="mt-5 grid min-w-0 grid-cols-2 gap-4 text-xs">
+                <div className="min-w-0">
                   <p className="text-muted-foreground">{t("routes.models")}</p>
-                  <p className="mt-1">{item.models}</p>
+                  <p className="mt-1 truncate text-foreground">{item.models}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">
                     {t("routes.priority")}
                   </p>
-                  <p className="mt-1 font-mono">P{item.priority}</p>
+                  <p className="mt-1 font-mono text-foreground">
+                    P{item.priority}
+                  </p>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <HeartPulse size={14} />
+
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 font-mono">
+                  <HeartPulse size={14} aria-hidden="true" />
                   {item.latency}
                 </span>
-                <Badge variant="outline" className="gap-1">
+                <Badge
+                  variant="outline"
+                  className="shrink-0 gap-1.5 font-normal"
+                >
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${item.enabled ? "bg-success" : "bg-muted-foreground"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      item.enabled ? "bg-success" : "bg-muted-foreground"
+                    }`}
                   />
-                  {item.enabled ? t("routes.healthy") : t("routes.disabled")}
+                  {item.enabled ? copy.healthy : copy.disabled}
                 </Badge>
               </div>
             </Card>
           ))}
         </div>
       </section>
-      <Card className="p-5">
-        <div className="flex items-center gap-3">
-          <ShieldAlert size={18} />
-          <div>
+
+      <Card className="min-w-0 p-5">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-muted">
+            <ShieldAlert size={18} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
             <h2 className="font-semibold">{t("routes.failover")}</h2>
-            <p className="text-xs text-muted-foreground">
-              主节点连续 3 次失败后自动切换到下一个优先级节点。
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              {copy.failoverHint}
             </p>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded border border-border px-3 py-2">
-            P1 · 中转站-主通道
-          </span>
-          <GitFork size={14} className="text-muted-foreground" />
-          <span className="rounded border border-border px-3 py-2">
-            P2 · 备用中转站
-          </span>
-          <GitFork size={14} className="text-muted-foreground" />
-          <span className="rounded border border-border px-3 py-2">
-            P3 · 官方直连
-          </span>
+
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
+          {providers.map((item, index) => (
+            <div
+              className="flex items-center gap-2"
+              key={`failover-${item.name}-${index}`}
+            >
+              <span className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-3 py-2 font-medium">
+                <span className="mr-2 font-mono text-muted-foreground">
+                  P{item.priority}
+                </span>
+                <span className="truncate">{item.name}</span>
+              </span>
+              {index < providers.length - 1 && (
+                <GitFork
+                  size={14}
+                  className="shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          ))}
         </div>
       </Card>
-      {
-        <Dialog open={dialog} onOpenChange={setDialog}>
-          <DialogContent aria-label={t("routes.add")}>
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t("routes.add")}</h2>
-              <Button
-                type="button"
-                onClick={() => setDialog(false)}
-                className="rounded p-2 hover:bg-muted"
-              >
-                <X size={16} />
-              </Button>
-            </div>
-            <label className="block text-sm">
-              名称
-              <Input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none"
-                placeholder="例如：团队中转站"
-              />
-            </label>
-            <label className="mt-4 block text-sm">
-              Base URL
-              <Input
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
-                placeholder="https://api.example.com/v1"
-              />
-            </label>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button
-                type="button"
-                onClick={() => setDialog(false)}
-                className="rounded-md border border-border px-4 py-2 text-sm"
-              >
-                取消
-              </Button>
-              <Button
-                type="button"
-                onClick={addProvider}
-                className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
-              >
-                <Check size={15} className="mr-2 inline" />
-                {t("routes.add")}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      }
+
+      <Dialog open={dialog} onOpenChange={setDialog}>
+        <DialogContent aria-label={t("routes.add")} className="max-w-md">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold">{t("routes.add")}</h2>
+            <Button
+              aria-label={copy.close}
+              className="shrink-0"
+              onClick={() => setDialog(false)}
+              size="icon"
+              title={copy.close}
+              type="button"
+              variant="ghost"
+            >
+              <X size={16} aria-hidden="true" />
+            </Button>
+          </div>
+
+          <label className="block text-sm">
+            {copy.providerName}
+            <Input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="mt-2"
+              placeholder={copy.namePlaceholder}
+            />
+          </label>
+
+          <label className="block text-sm">
+            {copy.endpoint}
+            <Input
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              className="mt-2 font-mono"
+              placeholder={copy.urlPlaceholder}
+            />
+          </label>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => setDialog(false)}
+              type="button"
+              variant="outline"
+            >
+              {copy.cancel}
+            </Button>
+            <Button onClick={addProvider} type="button">
+              <Check size={15} aria-hidden="true" />
+              {t("routes.add")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
