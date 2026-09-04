@@ -71,3 +71,11 @@
 .icon-button:focus-visible{outline:2px solid #a1a1aa;outline-offset:2px}
 .language-toggle{min-height:32px;padding:0}
 @media(max-width:760px){.sidebar.collapsed .control-row{flex-direction:row;align-items:center}.sidebar.collapsed .theme-toggle{width:32px;flex:0 0 32px}}
+
+/* shadcn/ui Button: variant="ghost" size="icon" */
+.shadcn-icon-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:0;border-radius:6px;background:transparent;color:#71717a;line-height:1;transition:color .2s,background-color .2s}
+.shadcn-icon-button:hover{background:#f4f4f5;color:#18181b}
+.shadcn-icon-button:focus-visible{outline:2px solid #18181b;outline-offset:2px}
+.dark .shadcn-icon-button{color:#a1a1aa}
+.dark .shadcn-icon-button:hover{background:#27272a;color:#fafafa}
+.dark .shadcn-icon-button:focus-visible{outline-color:#fafafa}
