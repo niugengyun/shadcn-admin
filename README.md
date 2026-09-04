@@ -8,13 +8,23 @@
 
 当前版本提供完整的前端交互和规范 Mock 数据，适合作为 AI 中控后台的视觉基线和业务脚手架。后端接口通过 `src/services/http.ts` 统一封装，页面暂未默认连接真实服务。
 
+## 开发规范入口
+
+修改本项目前按以下顺序读取：
+
+1. [AGENTS.md](./AGENTS.md)：Agent 执行顺序、授权边界和验证要求。
+2. [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)：shadcn/ui 视觉、主题、布局、组件和响应式规范。
+3. [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md)：页面命名、路由命名、组件使用和新页面开发流程。
+
+README 只介绍项目和运行方式；具体约束以以上三份文档为准，避免重复维护产生冲突。
+
 ## 特性
 
 - Vite + React 19 + TypeScript
 - shadcn/ui 设计体系，Zinc 黑白主题
 - `next-themes` 深色 / 浅色模式
 - 中文默认、中英双语切换，语言偏好保存到 `localStorage`
-- 全宽响应式布局，无顶部 Header，单层扁平侧边栏
+- Nav + Sidebar + Content 的全宽响应式管理后台布局
 - Recharts Token 趋势图和模型消耗排行
 - Agent 实例状态表、终端日志侧滑层
 - LLM 上游节点开关、添加节点 Dialog、Failover 策略展示
@@ -53,7 +63,7 @@ cp .env.example .env
 npm run dev
 ```
 
-默认访问地址：<http://localhost:5173>
+默认访问地址：<http://localhost:5174>
 
 指定端口或允许局域网访问：
 
@@ -95,10 +105,10 @@ npx tsc -b
 │   │   └── Metrics.tsx         # Token 统计与调用审计
 │   ├── services/
 │   │   └── http.ts             # 统一 HTTP 请求封装
-│   ├── components/             # 跨页面复用组件预留目录
-│   ├── lib/                    # 工具函数和基础能力预留目录
+│   ├── components/ui/          # shadcn/ui 组件实现与官方 primitives
+│   ├── lib/                    # cn 等基础工具函数
 │   ├── App.tsx                 # 应用壳、侧边栏和页面入口切换
-│   ├── App.css                 # 全局布局、主题和页面样式
+│   ├── App.css                 # 应用壳层和响应式布局，不承载组件皮肤
 │   ├── i18n.tsx                # LanguageProvider 与中英词典
 │   ├── index.css               # 全局样式入口
 │   └── main.tsx                # React 应用入口
@@ -225,8 +235,9 @@ tests/
 2. 在 `App.tsx` 中增加严格的 `NavId` 联合类型和菜单项。
 3. 将页面文案加入 `src/i18n.tsx` 的中英文词典。
 4. API 请求放入 `src/services/`，不要在页面中散落 `fetch`。
-5. 复用现有 `.panel`、`.metric-card`、`.status-badge` 等样式。
-6. 完成后运行 `npm run build` 和 `npm run lint`。
+5. 遵守 [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) 的 Content 边界、间距、token 和组件约束。
+6. 遵守 [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md) 的命名、路由和响应式流程。
+7. 完成后运行 `npm run build` 和 `npm run lint`，并检查桌面和手机视口。
 
 ## 主题与国际化
 
@@ -257,7 +268,7 @@ return <h1>{t('metrics.title')}</h1>
 
 ## shadcn/ui 约定
 
-项目沿用 shadcn/ui 的组件思想和 Zinc 中性色体系。引入标准组件时，优先通过 shadcn CLI / MCP 获取官方组件代码，不要手工改写主题变量。
+项目沿用 shadcn/ui 的组件思想和 Zinc 中性色体系。引入标准组件时，优先通过 shadcn CLI / 官方文档获取组件代码，并遵守 [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) 与 [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md)，不要手工改写主题变量或重复实现官方功能。
 
 建议组件目录：
 

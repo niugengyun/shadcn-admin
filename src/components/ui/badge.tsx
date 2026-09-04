@@ -1,7 +1,26 @@
-import type { HTMLAttributes } from 'react'
+import type { HTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../../lib/utils";
 
-type BadgeProps = HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'outline' }
-export function Badge({ className = '', variant = 'default', ...props }: BadgeProps) {
-  const styles = variant === 'outline' ? 'border border-border bg-transparent text-foreground' : 'bg-primary text-primary-foreground'
-  return <div className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${styles} ${className}`} {...props} />
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground",
+        secondary: "border-transparent bg-secondary text-secondary-foreground",
+        destructive:
+          "border-transparent bg-destructive text-destructive-foreground",
+        outline: "text-foreground",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  },
+);
+export interface BadgeProps
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+export function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  );
 }
