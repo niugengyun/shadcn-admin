@@ -1,10 +1,14 @@
 # AgentGateway Control Plane
 
-面向 AI Agent 基础设施的极简控制台脚手架。项目聚焦三个核心业务模块：
+面向 AI Agent 基础设施的极简控制台脚手架。项目聚焦网关运行、开发调试和 Token 可观测性：
 
 - **智能体网关（Agent Gateway / Harness）**：管理本地、沙盒和容器中的 Agent 执行器与运行实例。
 - **LLM 网关（LLM Gateway / Routes）**：管理模型中转节点、优先级、健康检查与故障转移。
 - **Token 统计（Token Observability / Metrics）**：观察 Token 用量、成本、延迟和调用链路。
+- **调试工作台（Playground）**：验证模型选择、统一协议和流式响应。
+- **访问控制（API Keys）**：管理网关调用凭据及其使用情况。
+- **请求日志（Request Logs）**：查看实时吞吐、路由负载和调用事件。
+- **系统设置（Settings）**：配置网关、安全、存储与流量限制。
 
 当前版本提供完整的前端交互和规范 Mock 数据，适合作为 AI 中控后台的视觉基线和业务脚手架。后端接口通过 `src/services/http.ts` 统一封装，页面暂未默认连接真实服务。
 
@@ -36,7 +40,7 @@ README 只介绍项目和运行方式；具体约束以以上三份文档为准�
 - shadcn/ui 设计体系，Zinc 黑白主题
 - `next-themes` 深色 / 浅色模式
 - 中文默认、中英双语切换，语言偏好保存到 `localStorage`
-- Nav + Sidebar + Content 的全宽响应式管理后台布局
+- 登录页与 Nav + Sidebar + Content 的全宽响应式管理后台布局
 - Recharts Token 趋势图和模型消耗排行
 - Agent 实例状态表、终端日志侧滑层
 - LLM 上游节点开关、添加节点 Dialog、Failover 策略展示
@@ -114,7 +118,12 @@ npx tsc -b
 │   ├── pages/                  # 业务页面，按一级导航拆分
 │   │   ├── Agents.tsx          # Agent Gateway / Harness 管理
 │   │   ├── Routes.tsx          # LLM Gateway / 上游路由管理
-│   │   └── Metrics.tsx         # Token 统计与调用审计
+│   │   ├── Metrics.tsx         # Token 统计与调用审计
+│   │   ├── Playground.tsx      # 模型调试工作台
+│   │   ├── ApiKeys.tsx         # API 密钥管理
+│   │   ├── Logs.tsx            # 请求事件流
+│   │   ├── Settings.tsx        # 网关系统设置
+│   │   └── Login.tsx           # 控制台登录
 │   ├── services/
 │   │   └── http.ts             # 统一 HTTP 请求封装
 │   ├── components/ui/          # shadcn/ui 组件实现与官方 primitives
@@ -175,6 +184,14 @@ npx tsc -b
 - 模型消耗排行
 - 最近高开销请求审计表
 - 审计字段包含 Trace ID、发起 Agent、分发节点、模型、总 Token、耗时和状态
+
+### Playground / API Keys / Request Logs / Settings
+
+- Playground 提供模型选择、请求参数和流式响应的本地 Mock 调试界面。
+- API Keys 以卡片形式展示凭据范围、调用量和最近使用时间，支持创建与撤销 Mock 密钥。
+- Request Logs 展示可筛选的请求事件流、实时吞吐和各路由负载。
+- Settings 提供网关端点、安全策略、数据保留和并发限制配置表单。
+- 登录页使用 `agent-authenticated` 本地会话标记承载前端演示；接入后端时应替换为服务端会话或短期 Token。
 
 ## 接口封装
 

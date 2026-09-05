@@ -5,8 +5,10 @@ import {
   ArrowUpRight,
   BarChart3,
   Bot,
+  FileClock,
   Cpu,
   GitFork,
+  KeyRound,
   Languages,
   LayoutDashboard,
   HeartPulse,
@@ -15,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  Sparkles,
   ChevronDown,
   Settings,
   LogOut,
@@ -39,6 +42,11 @@ import {
 import Metrics from "./pages/Metrics";
 import Agents from "./pages/Agents";
 import Routes from "./pages/Routes";
+import ApiKeys from "./pages/ApiKeys";
+import Login from "./pages/Login";
+import Logs from "./pages/Logs";
+import Playground from "./pages/Playground";
+import SettingsPage from "./pages/Settings";
 import { LanguageProvider, useI18n } from "./i18n";
 import { Button } from "./components/ui/button";
 import { Card } from "./components/ui/card";
@@ -52,13 +60,17 @@ import {
   DropdownMenuTrigger,
 } from "./components/ui/dropdown-menu";
 
-type NavId = "overview" | "agents" | "routes" | "metrics";
-type NavItem = { id: NavId; path: string; icon: typeof LayoutDashboard };
+type NavId = "overview" | "agents" | "routes" | "playground" | "apiKeys" | "metrics" | "logs" | "settings";
+type NavItem = { id: NavId; path: string; icon: typeof LayoutDashboard; section: "workspace" | "tools" | "observability" | "system" };
 const navItems: NavItem[] = [
-  { id: "overview", path: "/", icon: LayoutDashboard },
-  { id: "agents", path: "/agents", icon: Bot },
-  { id: "routes", path: "/routes", icon: GitFork },
-  { id: "metrics", path: "/metrics", icon: BarChart3 },
+  { id: "overview", path: "/", icon: LayoutDashboard, section: "workspace" },
+  { id: "agents", path: "/agents", icon: Bot, section: "workspace" },
+  { id: "routes", path: "/routes", icon: GitFork, section: "workspace" },
+  { id: "playground", path: "/playground", icon: Sparkles, section: "tools" },
+  { id: "apiKeys", path: "/api-keys", icon: KeyRound, section: "tools" },
+  { id: "metrics", path: "/metrics", icon: BarChart3, section: "observability" },
+  { id: "logs", path: "/logs", icon: FileClock, section: "observability" },
+  { id: "settings", path: "/settings", icon: Settings, section: "system" },
 ];
 const pathToNavId = (path: string): NavId =>
   navItems.find((item) => item.path === path)?.id ?? "overview";
@@ -105,10 +117,12 @@ function TopNav({
   collapsed,
   onToggleCollapsed,
   onOpenMenu,
+  onSignOut,
 }: {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   onOpenMenu: () => void;
+  onSignOut: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
@@ -177,7 +191,7 @@ function TopNav({
                 <Settings size={15} />
                 {t("common.settings")}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setOpen(false)}>
+              <DropdownMenuItem onSelect={() => { setOpen(false); onSignOut(); }}>
                 <LogOut size={15} />
                 {t("common.signOut")}
               </DropdownMenuItem>
@@ -200,26 +214,32 @@ function Sidebar({
   mobileOpen: boolean;
 }) {
   const { t } = useI18n();
+  const sections: NavItem["section"][] = ["workspace", "tools", "observability", "system"];
   return (
     <aside
       className={`sidebar${collapsed ? " collapsed" : ""}${mobileOpen ? " open" : ""}`}
     >
       <nav className="nav-list">
-        {navItems.map(({ id, path, icon: Icon }) => (
-          <a
-            className={`nav-item ${active === id ? "active" : ""}`}
-            key={id}
-            href={path}
-            onClick={(event) => {
-              event.preventDefault();
-              onNavigate(id);
-            }}
-            title={t(`nav.${id}`)}
-            aria-current={active === id ? "page" : undefined}
-          >
-            <Icon size={17} strokeWidth={1.8} />
-            <span>{t(`nav.${id}`)}</span>
-          </a>
+        {sections.map((section) => (
+          <div className="nav-section" key={section}>
+            <p className="nav-section-label">{t(`nav.section.${section}`)}</p>
+            {navItems.filter((item) => item.section === section).map(({ id, path, icon: Icon }) => (
+              <a
+                className={`nav-item ${active === id ? "active" : ""}`}
+                key={id}
+                href={path}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onNavigate(id);
+                }}
+                title={t(`nav.${id}`)}
+                aria-current={active === id ? "page" : undefined}
+              >
+                <Icon size={17} strokeWidth={1.8} />
+                <span>{t(`nav.${id}`)}</span>
+              </a>
+            ))}
+          </div>
         ))}
       </nav>
       <div className="sidebar-bottom">
@@ -371,7 +391,7 @@ function Overview({ onNavigate }: { onNavigate: (id: NavId) => void }) {
     </div>
   );
 }
-function AppShell() {
+function AppShell({ onSignOut }: { onSignOut: () => void }) {
   const [active, setActive] = useState<NavId>(() =>
     pathToNavId(window.location.pathname),
   );
@@ -402,6 +422,7 @@ function AppShell() {
         collapsed={collapsed}
         onToggleCollapsed={toggleCollapsed}
         onOpenMenu={() => setMobileOpen(true)}
+        onSignOut={onSignOut}
       />
       <Sidebar
         active={active}
@@ -419,18 +440,41 @@ function AppShell() {
           <Metrics />
         ) : active === "agents" ? (
           <Agents />
-        ) : (
+        ) : active === "routes" ? (
           <Routes />
+        ) : active === "playground" ? (
+          <Playground />
+        ) : active === "apiKeys" ? (
+          <ApiKeys />
+        ) : active === "logs" ? (
+          <Logs />
+        ) : (
+          <SettingsPage />
         )}
       </main>
     </div>
   );
 }
 export default function App() {
+  const [authenticated, setAuthenticated] = useState(() => localStorage.getItem("agent-authenticated") === "1");
+  useEffect(() => {
+    if (!authenticated && window.location.pathname !== "/login") window.history.replaceState({}, "", "/login");
+    if (authenticated && window.location.pathname === "/login") window.history.replaceState({}, "", "/");
+  }, [authenticated]);
+  const signIn = () => {
+    localStorage.setItem("agent-authenticated", "1");
+    window.history.replaceState({}, "", "/");
+    setAuthenticated(true);
+  };
+  const signOut = () => {
+    localStorage.removeItem("agent-authenticated");
+    window.history.replaceState({}, "", "/login");
+    setAuthenticated(false);
+  };
   return (
     <LanguageProvider>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-        <AppShell />
+        {authenticated ? <AppShell onSignOut={signOut} /> : <Login onSignIn={signIn} />}
       </ThemeProvider>
     </LanguageProvider>
   );
